@@ -1,6 +1,6 @@
 // import res from "express/lib/response";
 const oracledb = require('oracledb');
-const Connection = require('oracledb/lib/connection');
+// const Connection = require('oracledb/lib/connection');
 // const db_con = require('./oracle-conn.js')
 
 
@@ -12,14 +12,6 @@ const selectAllUsers = () => {
     return new Promise((resolve, reject) => {
 
         
-        // console.log(conn)
-        // const query = "SELECT * FROM \"_USER\""
-        // conn.execute(query, {}, { autoCommit: true })
-        //     .then((result) => {
-        //         return resolve(result.rows)
-        //     }).catch((err) => {
-        //         return reject(err)
-        //     })
         oracledb.getConnection({
             user: 'SYS',
             password: '1025',

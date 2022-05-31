@@ -18,11 +18,11 @@ app.get('/', (request, response) => {
     response.send('Hello world');
 });
 
-// app.get('/api/courses', (request, result) => {
+// app.get('/app/courses', (request, result) => {
 //     result.send(courses);
 // });
 
-// app.get('/api/courses/:id', (req, res) => {
+// app.get('/app/courses/:id', (req, res) => {
 //     const course = courses.find(c => c.id === parseInt(req.params.id));
 //     if (!course) return res.status(404).send('The course with the given id was not found');//404 - object not found
 //     res.send(course);
@@ -41,7 +41,7 @@ app.get('/user-password', (req, res) => {
 });
 
 
-// app.post('/api/courses', (req, res) => {
+// app.post('/app/courses', (req, res) => {
 
 //     const { error } = validateCourse(req.body);     //eq to result.error
 //     // if invalid, return 400 - Bad request
@@ -84,7 +84,7 @@ app.post('/check-user-password', (req, res) => {
 });
 
 
-// app.put('/api/courses/:id', (req, res) => {
+// app.put('/app/courses/:id', (req, res) => {
 //     // look up the course
 //     // if not existing, return 404
 //     const course = courses.find(c => c.id === parseInt(req.params.id));
@@ -132,7 +132,7 @@ function validateUserPasswd(user_passwd) {
 }
 
 
-// app.delete('/api/courses/:id', (req, res) => {
+// app.delete('/app/courses/:id', (req, res) => {
 //     // Look up for the course
 //     // Not existing, return 404
 //     const course = courses.find(c => c.id === parseInt(req.params.id));
