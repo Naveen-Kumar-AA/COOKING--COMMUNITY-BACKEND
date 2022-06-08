@@ -1,8 +1,8 @@
-const express = require('express')
+const express = require('express');
 const Joi = require('joi');
 const app = express();
 const cors = require('cors');
-const db = require('./oracle.js')
+const db = require('./oracle.js');
 
 app.use(cors())
 app.use(express.json());
@@ -27,19 +27,6 @@ app.get('/', (request, response) => {
 //     if (!course) return res.status(404).send('The course with the given id was not found');//404 - object not found
 //     res.send(course);
 // });
-
-app.get('/user-password', (req, res) => {
-    // res.send(courses);
-    // console.log(db.selectAllUsers())
-    // res.send(db.selectAllUsers())
-    db.selectAllUsers().then((result) => {
-        res.send(result)
-    }).catch((err) => {
-        console.log(err);
-    });
-
-});
-
 
 // app.post('/app/courses', (req, res) => {
 
@@ -68,20 +55,6 @@ app.get('/user-password', (req, res) => {
 //     courses.push(course);
 //     res.send(course);
 // });
-
-app.post('/check-user-password', (req, res) => {
-
-    const { error } = validateUserPasswd(req.body);     //eq to result.error
-    // if invalid, return 400 - Bad request
-    if (error) return res.status(400).send(error.details[0].message);
-
-    db.checkUserPassword(req.body.username, req.body.password).then((result) => {
-        res.send(result)
-    }).catch((err) => {
-        console.log(err);
-    });
-    
-});
 
 
 // app.put('/app/courses/:id', (req, res) => {
@@ -122,15 +95,6 @@ app.post('/check-user-password', (req, res) => {
 //     return Joi.validate(course, schema);
 // }
 
-function validateUserPasswd(user_passwd) {
-    const schema = {                                    
-        username: Joi.string().required(),
-        password: Joi.string().required()
-    };  
-
-    return Joi.validate(user_passwd, schema);
-}
-
 
 // app.delete('/app/courses/:id', (req, res) => {
 //     // Look up for the course
@@ -150,6 +114,67 @@ function validateUserPasswd(user_passwd) {
 
 // });
 
+
+
+app.get('/user-password', (req, res) => {
+    // res.send(courses);
+    // console.log(db.selectAllUsers())
+    // res.send(db.selectAllUsers())
+    db.selectAllUsers().then((result) => {
+        res.send(result)
+    }).catch((err) => {
+        console.log(err);
+    });
+
+});
+
+
+
+app.post('/check-user-password', (req, res) => {
+
+    const { error } = validateUserPasswd(req.body);     //eq to result.error
+    // if invalid, return 400 - Bad request
+    if (error) return res.status(400).send(error.details[0].message);
+
+    db.checkUserPassword(req.body.username, req.body.password).then((result) => {
+        res.send(result)
+    }).catch((err) => {
+        console.log(err);
+    });
+    
+});
+
+
+function validateUserPasswd(user_passwd) {
+    const schema = {                                    
+        username: Joi.string().required(),
+        password: Joi.string().required()
+    };  
+
+    return Joi.validate(user_passwd, schema);
+}
+
+
+app.get('/profile/:profile_id', (req, res) => {
+    
+    db.getProfileDetails(req.params.profile_id).then((result) => {
+        res.send(result)
+    }).catch((err) => {
+        console.log(err);
+    });
+
+});
+
+
+app.post('/do-signup', (req, res) => {
+    // console.log(req.body)
+    db.doSignUp(req.body).then( (result) => {
+        res.send(result);
+    }).catch((err)=> {
+        console.log(`sign-up error : ${JSON.stringify(err)}`);
+        res.send(err);
+    })
+});
 
 const port = process.env.PORT || 3001;
 app.listen(port, () => console.log(`Listening on port ${port}...`))
