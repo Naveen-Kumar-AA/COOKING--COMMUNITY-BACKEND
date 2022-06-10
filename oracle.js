@@ -89,7 +89,8 @@ const getProfileDetails = (username) => {
             const query = `SELECT * FROM \"_PROFILE\" WHERE USERNAME = '${username}'`
             conn.execute(query, {}, { autoCommit: true })
                 .then((result) => {
-                    return resolve(result.rows)
+                    console.log(JSON.stringify(result.rows))
+                    return resolve(JSON.stringify(result.rows))
                 }).catch((err) => {
                     console.log(err)
                     return reject(err)
@@ -158,6 +159,15 @@ const doSignUp = (signup_details) => {
                         return resolve(result)
                     }).catch((err) => {
                         // console.log(`insertion failed`)
+                        return reject(err)
+                    })
+                const insert_username_password = `INSERT INTO "_USER" VALUES('${signup_details.username}','${signup_details.password}')`
+                console.log(insert_username_password)
+                conn.execute(insert_username_password, {}, { autoCommit: true })
+                    .then((result) => {
+                        // return resolve(result)
+                    }).catch((err) => {
+                        console.log(`insertion failed`)
                         return reject(err)
                     })
 
