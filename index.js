@@ -176,6 +176,29 @@ app.post('/do-signup', (req, res) => {
     })
 });
 
+
+
+app.post('/new-post', (req, res) => {
+    // console.log(req.body)
+    db.createNewPost(req.body).then( (result) => {
+        res.send(result);
+    }).catch((err)=> {
+        console.log(`Create new post error : ${JSON.stringify(err)}`);
+        res.send(err);
+    })
+});
+
+
+app.get('/posts/:meal', (req,res) => {
+    db.getPostsByMeal(req.params.meal).then( (result) => {
+        res.send(result);
+    }).catch((err)=>{
+        console.log('Fetch posts failed!');
+        res.send(err);
+    })
+})
+
+
 const port = process.env.PORT || 3001;
 app.listen(port, () => console.log(`Listening on port ${port}...`))
 
