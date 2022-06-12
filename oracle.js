@@ -200,7 +200,7 @@ const createNewPost = (body) => {
             tns: con_str
         }).then((conn) => {
             getNewPostID().then((newPostID) => {
-                const query = `INSERT INTO "_REO_POSTS" VALUES(${newPostID},'${body.title}','${body.meal}','${body.cuisine}','${body.recipe_content}','${body.caption}', '${body.username}')`
+                const query = `INSERT INTO "_REO_POSTS" VALUES(${newPostID},'${body.title}','${body.meal}','${body.cuisine}','${body.recipe}','${body.caption}', '${body.username}')`
                 console.log(query)
                 conn.execute(query, {}, { autoCommit: true })
                     .then((result) => {
