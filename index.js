@@ -141,24 +141,30 @@ app.post('/check-user-password', (req, res) => {
     }).catch((err) => {
         console.log(err);
     });
-    
+
 });
 
 
 function validateUserPasswd(user_passwd) {
-    const schema = {                                    
+    const schema = {
         username: Joi.string().required(),
         password: Joi.string().required()
-    };  
+    };
 
     return Joi.validate(user_passwd, schema);
 }
 
 
 app.get('/profile/:profile_id', (req, res) => {
-    
+
     db.getProfileDetails(req.params.profile_id).then((result) => {
         res.send(result)
+        // result = user
+        // const followersQuuery = `SELECT USERID, COUNT(*) FROM "_USER_FOLLOWER" WHERE USERID = ${user[0]} GROUP BY USERID`
+        // conn.execute(followersQuuery, {}, { autoCommit: true }).then((followers) => {
+        //     const no_of_followers = followers.rows[0][1]
+        //     return resolve({ username: user[0], first_name: user[1], last_name: user[2], bio: user[3], email: user[4], phn_number: user[5], no_of_followers: no_of_followers })
+        // })
     }).catch((err) => {
         console.log(err);
     });
@@ -168,9 +174,9 @@ app.get('/profile/:profile_id', (req, res) => {
 
 app.post('/do-signup', (req, res) => {
     // console.log(req.body)
-    db.doSignUp(req.body).then( (result) => {
+    db.doSignUp(req.body).then((result) => {
         res.send(result);
-    }).catch((err)=> {
+    }).catch((err) => {
         console.log(`sign-up error : ${JSON.stringify(err)}`);
         res.send(err);
     })
@@ -180,24 +186,81 @@ app.post('/do-signup', (req, res) => {
 
 app.post('/new-post', (req, res) => {
     // console.log(req.body)
-    db.createNewPost(req.body).then( (result) => {
+    db.createNewPost(req.body).then((result) => {
         res.send(result);
-    }).catch((err)=> {
+    }).catch((err) => {
         console.log(`Create new post error : ${JSON.stringify(err)}`);
         res.send(err);
     })
 });
 
 
-app.get('/posts/:meal', (req,res) => {
-    db.getPostsByMeal(req.params.meal).then( (result) => {
+app.get('/posts/:meal', (req, res) => {
+    db.getPostsByMeal(req.params.meal).then((result) => {
         res.send(result);
-    }).catch((err)=>{
+    }).catch((err) => {
         console.log('Fetch posts failed!');
         res.send(err);
     })
 })
 
+
+app.get('/search/:value', (req, res) => {
+    db.searchByValue(req.params.value).then((result) => {
+        res.send(result)
+    }).catch((err) => {
+        console.log(`Search profiles failed!`)
+        res.send(err)
+    })
+})
+
+app.post('/follow/:followerid', (req, res) => {
+    db.doFollow(req.body).then((result) => {
+        res.send(result);
+    }).catch((err) => {
+        res.send(err);
+    })
+
+})
+
+app.get('/Homepage/:username', (req, res) => {
+    db.getProfileDetails(req.params.username).then((result) => {
+        res.send(result)
+    }).catch((err) => {
+        console.log(err)
+    })
+})
+
+
+app.post('/do-follow', (req, res) => {
+    console.log(req.body)
+    db.doFollow(req.body).then((result) => {
+        res.send(result)
+    }).catch((err) => {
+        console.log(err)
+    })
+})
+
+
+app.post('/do-unfollow', (req, res) => {
+    console.log(req.body)
+    db.doUnFollow(req.body).then((result) => {
+        res.send(result)
+    }).catch((err) => {
+        console.log(err)
+    })
+})
+
+
+app.post('/edit-profile', (req,res)=>{
+    console.log(req.body)
+    db.editProfile(req.body).then((result)=>{
+        res.send(result)
+    }).catch((err)=>{
+        console.log(err)
+        res.send(err)
+    })
+})
 
 const port = process.env.PORT || 3001;
 app.listen(port, () => console.log(`Listening on port ${port}...`))
