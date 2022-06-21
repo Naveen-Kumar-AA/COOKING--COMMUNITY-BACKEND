@@ -97,14 +97,14 @@ const getProfileDetails = (username) => {
                     // const followersQuuery = `select count(*) from  "_USER_FOLLOWER" WHERE USERID = '${username}'`
                     const followersQuuery = `select getFollowers('${username}'), getFollowing('${username}') FROM dual`
                     conn.execute(followersQuuery, {}, { autoCommit: true })
-                    .then((followers) => {
-                        const no_of_followers = followers.rows[0][0];
-                        const no_of_following = followers.rows[0][1];
-                        console.log(followers);
-                        return resolve({ username: user[0], first_name: user[1], last_name: user[2], bio: user[3], email: user[4], phn_number: user[5], no_of_followers: no_of_followers, no_of_following: no_of_following })
-                    }).catch((err) => {
-                        reject(err);
-                    });
+                        .then((followers) => {
+                            const no_of_followers = followers.rows[0][0];
+                            const no_of_following = followers.rows[0][1];
+                            console.log(followers);
+                            return resolve({ username: user[0], first_name: user[1], last_name: user[2], bio: user[3], email: user[4], phn_number: user[5], no_of_followers: no_of_followers, no_of_following: no_of_following })
+                        }).catch((err) => {
+                            reject(err);
+                        });
 
                 }).catch((err) => {
                     console.log(err)
@@ -284,17 +284,22 @@ const getPostsByMeal = (meal) => {
             console.log(query)
             conn.execute(query, {}, { autoCommit: true })
                 .then((result) => {
-                    const body = result.rows
-                    resp = []
-                    for (const recipe of body) {
 
+                    const body = result.rows
+                    const resp = body.map((recipe) => {
                         const timestamp = new Date(recipe[7])
                         const date = timestamp.toLocaleString();
-                        console.log(date)
-                        body_obj = { postID: recipe[0], title: recipe[1], meal: recipe[2], cuisine: recipe[3], recipe_content: recipe[4], caption: recipe[5], username: recipe[6], date: date }
-                        resp.push(body_obj)
-                    }
-                    resolve(resp)
+                        return new Promise((resolve, reject) => {
+                            getNoOfLikes(recipe[0]).then((likesCount) => {
+                                body_obj = { postID: recipe[0], title: recipe[1], meal: recipe[2], cuisine: recipe[3], recipe_content: recipe[4], caption: recipe[5], username: recipe[6], date: date, likes: likesCount }
+                                resolve(body_obj)
+                            }).catch((err) => {
+                                reject(err)
+                            })
+                        });
+                    });
+                    Promise.all(resp).then(res => { resolve(res); }).catch((err) => { console.log(err); });
+
                 }).catch((err) => {
                     console.log(err)
                     return reject(err)
@@ -461,8 +466,8 @@ const getFollowersList = (user_id) => {
 //     })
 // }
 
-const editProfile = (newProfile)=>{
-    return new Promise((resolve,reject)=>{
+const editProfile = (newProfile) => {
+    return new Promise((resolve, reject) => {
         oracledb.getConnection({
             user: 'SYS',
             password: '1025',
@@ -488,6 +493,163 @@ const editProfile = (newProfile)=>{
     })
 }
 
+
+const doLikePost = (postId, userID) => {
+    return new Promise((resolve, reject) => {
+        oracledb.getConnection({
+            user: 'SYS',
+            password: '1025',
+            privilege: oracledb.SYSDBA,
+            tns: con_str
+        }).then((conn) => {
+
+            const query = `INSERT INTO "_LIKES" VALUES(${postId},'${userID}')`
+            console.log(query)
+            conn.execute(query, {}, { autoCommit: true })
+                .then((result) => {
+                    console.log(result)
+                    resolve(result)
+                }).catch((err) => {
+                    console.log(err)
+                    return reject(err)
+                })
+
+        }).catch((err) => {
+            console.log(err);
+            return reject(err)
+        });
+    })
+}
+
+
+const disLikePost = (postID, userID) => {
+    return new Promise((resolve, reject) => {
+        oracledb.getConnection({
+            user: 'SYS',
+            password: '1025',
+            privilege: oracledb.SYSDBA,
+            tns: con_str
+        }).then((conn) => {
+
+            const query = `DELETE FROM "_LIKES" WHERE POSTID = ${postID} AND USERID = '${userID}'`
+            console.log(query)
+            conn.execute(query, {}, { autoCommit: true })
+                .then((result) => {
+                    console.log(result)
+                    resolve(result)
+                }).catch((err) => {
+                    console.log(err)
+                    return reject(err)
+                })
+
+        }).catch((err) => {
+            console.log(err);
+            return reject(err)
+        });
+    })
+}
+
+
+
+const getNoOfLikes = (postID) => {
+    return new Promise((resolve, reject) => {
+        oracledb.getConnection({
+            user: 'SYS',
+            password: '1025',
+            privilege: oracledb.SYSDBA,
+            tns: con_str
+        }).then((conn) => {
+
+            const query = `SELECT COUNT(*) FROM "_LIKES" WHERE POSTID = ${postID}`
+            console.log(query)
+            conn.execute(query, {}, { autoCommit: true })
+                .then((result) => {
+                    // console.log(result.rows[0][0])
+                    resolve(result.rows[0][0])
+                }).catch((err) => {
+                    console.log(err)
+                    return reject(err)
+                })
+
+        }).catch((err) => {
+            console.log(err);
+            return reject(err)
+        });
+    })
+}
+
+
+
+const isLiked = (postID,userID)=>{
+    return new Promise((resolve,reject)=>{
+        oracledb.getConnection({
+            user: 'SYS',
+            password: '1025',
+            privilege: oracledb.SYSDBA,
+            tns: con_str
+        }).then((conn) => {
+
+            const query = `SELECT COUNT(*) FROM "_LIKES" WHERE POSTID = ${postID} AND USERID = '${userID}'`
+            console.log(query)
+            conn.execute(query, {}, { autoCommit: true })
+                .then((result) => {
+                    console.log(result.rows[0][0])
+                    resolve(result.rows[0][0])
+                }).catch((err) => {
+                    console.log(err)
+                    return reject(err)
+                })
+
+        }).catch((err) => {
+            console.log(err);
+            return reject(err)
+        });        
+    })
+}
+
+
+const getPostByUserID = (userID)=>{
+    return new Promise((resolve,reject)=>{
+        oracledb.getConnection({
+            user: 'SYS',
+            password: '1025',
+            privilege: oracledb.SYSDBA,
+            tns: con_str
+        }).then((conn) => {
+
+            const query = `SELECT * FROM "_REO_POSTS" WHERE USERNAME = '${userID}'`
+            console.log(query)
+            conn.execute(query, {}, { autoCommit: true })
+                .then((result) => {
+
+                    const body = result.rows
+                    const resp = body.map((recipe) => {
+                        const timestamp = new Date(recipe[7])
+                        const date = timestamp.toLocaleString();
+                        return new Promise((resolve, reject) => {
+                            getNoOfLikes(recipe[0]).then((likesCount) => {
+                                body_obj = { postID: recipe[0], title: recipe[1], meal: recipe[2], cuisine: recipe[3], recipe_content: recipe[4], caption: recipe[5], username: recipe[6], date: date, likes: likesCount }
+                                resolve(body_obj)
+                            }).catch((err) => {
+                                reject(err)
+                            })
+                        });
+                    });
+                    Promise.all(resp).then(res => { resolve(res); }).catch((err) => { console.log(err); });
+
+                }).catch((err) => {
+                    console.log(err)
+                    return reject(err)
+                })
+
+        }).catch((err) => {
+            console.log(err);
+            return reject(err)
+        });
+    })
+}
+
+
 module.exports = {
     selectAllUsers,
     checkUserPassword,
@@ -497,7 +659,12 @@ module.exports = {
     getPostsByMeal,
     doFollow,
     doUnFollow,
-    searchByValue,
-    editProfile
     // getOtherProfileDetails
+    searchByValue,
+    editProfile,
+    doLikePost,
+    disLikePost,
+    getNoOfLikes,
+    isLiked,
+    getPostByUserID
 }

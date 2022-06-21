@@ -253,7 +253,7 @@ app.post('/do-unfollow', (req, res) => {
 
 
 app.post('/edit-profile', (req,res)=>{
-    console.log(req.body)
+    // console.log(req.body)
     db.editProfile(req.body).then((result)=>{
         res.send(result)
     }).catch((err)=>{
@@ -261,6 +261,62 @@ app.post('/edit-profile', (req,res)=>{
         res.send(err)
     })
 })
+
+
+app.post('/like-post',(req,res)=>{
+    db.doLikePost(req.body.postID, req.body.userID).then((result)=>{
+        console.log(result)
+        res.send(result)
+    }).catch((err)=>{
+        console.log(err)
+        res.send(err)
+    })
+})
+
+
+app.post('/dislike-post',(req,res)=>{
+    db.disLikePost(req.body.postID, req.body.userID).then((result)=>{
+        console.log(result)
+        res.send(result)
+    }).catch((err)=>{
+        console.log(err)
+        res.send(err)
+    })
+})
+
+
+app.get('/no-of-likes/:postID',(req,res)=>{
+    db.getNoOfLikes(req.params.postID).then((result)=>{
+        res.send(result)
+    })
+    .catch((err)=>{
+        res.send(err)
+    })
+})
+
+app.post('/is-liked',(req,res)=>{
+    console.log('hi')
+    db.isLiked(req.body.postID, req.body.userID).then(response =>{
+        res_body = {
+            "status" : response
+        }
+        res.send(res_body)
+    }).catch(err=>{
+        console.log(err)
+        res.send(err)
+    })
+})
+
+app.get('/get-user-posts/:userid',(req,res)=>{
+    db.getPostByUserID(req.params.userid).then((result)=>{
+        console.log(result)
+        res.send(result)
+    }).catch((err)=>{
+        console.log(err)
+        res.send(err)
+    })
+})
+
 
 const port = process.env.PORT || 3001;
 app.listen(port, () => console.log(`Listening on port ${port}...`))
