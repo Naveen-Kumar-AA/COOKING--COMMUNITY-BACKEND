@@ -2,125 +2,21 @@ const express = require('express');
 const Joi = require('joi');
 const app = express();
 const cors = require('cors');
-const db = require('./oracle.js');
-
+const user = require('./repositories/user.js');
+const followers = require('./repositories/followers.js');
+const likes = require('./repositories/likes.js');
+const post = require('./repositories/post.js');
 app.use(cors())
 app.use(express.json());
 
-const courses = [
-    { id: 1, name: 'course1' },
-    { id: 2, name: 'course2' },
-    { id: 3, name: 'course3' },
-    { id: 4, name: 'course4' },
-];
 
 app.get('/', (request, response) => {
     response.send('Hello world');
 });
 
-// app.get('/app/courses', (request, result) => {
-//     result.send(courses);
-// });
-
-// app.get('/app/courses/:id', (req, res) => {
-//     const course = courses.find(c => c.id === parseInt(req.params.id));
-//     if (!course) return res.status(404).send('The course with the given id was not found');//404 - object not found
-//     res.send(course);
-// });
-
-// app.post('/app/courses', (req, res) => {
-
-//     const { error } = validateCourse(req.body);     //eq to result.error
-//     // if invalid, return 400 - Bad request
-//     if (error) return res.status(400).send(error.details[0].message);
-
-
-//     // const schema = {
-//     //     name : Joi.string().min(3).required()
-//     // };
-
-//     // const result = Joi.validate(req.body, schema);
-//     // console.log(result)
-
-//     // if(result.error){
-//     //     res.status(400).send(result.error.details[0].message);
-//     //     return
-//     // }
-
-//     const course = {
-//         id: courses.length + 1,
-//         name: req.body.name
-//     };
-
-//     courses.push(course);
-//     res.send(course);
-// });
-
-
-// app.put('/app/courses/:id', (req, res) => {
-//     // look up the course
-//     // if not existing, return 404
-//     const course = courses.find(c => c.id === parseInt(req.params.id));
-//     if (!course) return res.status(404).send('The course with the given id was not found');//404 - object not found
-
-
-
-//     // // validate
-//     // const schema = {                                  // Put this into a
-//     //     name : Joi.string().min(3).required()         // function to  
-//     // };                                                // reuse
-
-//     // const result = Joi.validate(req.body, schema);
-
-//     // const result = validateCourse(req.body);
-//     const { error } = validateCourse(req.body);     //eq to result.error
-//     // if invalid, return 400 - Bad request
-//     if (error) return res.status(400).send(error.details[0].message);
-
-
-//     // update course
-//     course.name = req.body.name;
-
-//     // return the updated course
-//     res.send(course);
-
-// });
-
-
-// function validateCourse(course) {
-//     const schema = {                                  // Put this into a
-//         name: Joi.string().min(3).required()         // function to  
-//     };                                                // reuse
-
-//     return Joi.validate(course, schema);
-// }
-
-
-// app.delete('/app/courses/:id', (req, res) => {
-//     // Look up for the course
-//     // Not existing, return 404
-//     const course = courses.find(c => c.id === parseInt(req.params.id));
-//     if (!course) return res.status(404).send('The course with the given id was not found');//404 - object not found
-
-
-//     // Delete
-//     const index = courses.indexOf(course);
-//     courses.splice(index, 1);    //Go to the index and remove one object
-
-
-
-//     // Return the same course
-//     res.send(course)
-
-// });
-
-
 
 app.get('/user-password', (req, res) => {
-    // res.send(courses);
-    // console.log(db.selectAllUsers())
-    // res.send(db.selectAllUsers())
-    db.selectAllUsers().then((result) => {
+    user.selectAllUsers().then((result) => {
         res.send(result)
     }).catch((err) => {
         console.log(err);
@@ -136,7 +32,7 @@ app.post('/check-user-password', (req, res) => {
     // if invalid, return 400 - Bad request
     if (error) return res.status(400).send(error.details[0].message);
 
-    db.checkUserPassword(req.body.username, req.body.password).then((result) => {
+    user.checkUserPassword(req.body.username, req.body.password).then((result) => {
         res.send(result)
     }).catch((err) => {
         console.log(err);
@@ -157,14 +53,8 @@ function validateUserPasswd(user_passwd) {
 
 app.get('/profile/:profile_id', (req, res) => {
 
-    db.getProfileDetails(req.params.profile_id).then((result) => {
+    user.getProfileDetails(req.params.profile_id).then((result) => {
         res.send(result)
-        // result = user
-        // const followersQuuery = `SELECT USERID, COUNT(*) FROM "_USER_FOLLOWER" WHERE USERID = ${user[0]} GROUP BY USERID`
-        // conn.execute(followersQuuery, {}, { autoCommit: true }).then((followers) => {
-        //     const no_of_followers = followers.rows[0][1]
-        //     return resolve({ username: user[0], first_name: user[1], last_name: user[2], bio: user[3], email: user[4], phn_number: user[5], no_of_followers: no_of_followers })
-        // })
     }).catch((err) => {
         console.log(err);
     });
@@ -174,7 +64,7 @@ app.get('/profile/:profile_id', (req, res) => {
 
 app.post('/do-signup', (req, res) => {
     // console.log(req.body)
-    db.doSignUp(req.body).then((result) => {
+    user.doSignUp(req.body).then((result) => {
         res.send(result);
     }).catch((err) => {
         console.log(`sign-up error : ${JSON.stringify(err)}`);
@@ -186,7 +76,7 @@ app.post('/do-signup', (req, res) => {
 
 app.post('/new-post', (req, res) => {
     // console.log(req.body)
-    db.createNewPost(req.body).then((result) => {
+    post.createNewPost(req.body).then((result) => {
         res.send(result);
     }).catch((err) => {
         console.log(`Create new post error : ${JSON.stringify(err)}`);
@@ -196,7 +86,7 @@ app.post('/new-post', (req, res) => {
 
 
 app.get('/posts/:meal', (req, res) => {
-    db.getPostsByMeal(req.params.meal).then((result) => {
+    post.getPostsByMeal(req.params.meal).then((result) => {
         res.send(result);
     }).catch((err) => {
         console.log('Fetch posts failed!');
@@ -206,7 +96,7 @@ app.get('/posts/:meal', (req, res) => {
 
 
 app.get('/search/:value', (req, res) => {
-    db.searchByValue(req.params.value).then((result) => {
+    user.searchByValue(req.params.value).then((result) => {
         res.send(result)
     }).catch((err) => {
         console.log(`Search profiles failed!`)
@@ -215,7 +105,7 @@ app.get('/search/:value', (req, res) => {
 })
 
 app.post('/follow/:followerid', (req, res) => {
-    db.doFollow(req.body).then((result) => {
+    followers.doFollow(req.body).then((result) => {
         res.send(result);
     }).catch((err) => {
         res.send(err);
@@ -224,7 +114,7 @@ app.post('/follow/:followerid', (req, res) => {
 })
 
 app.get('/Homepage/:username', (req, res) => {
-    db.getProfileDetails(req.params.username).then((result) => {
+    user.getProfileDetails(req.params.username).then((result) => {
         res.send(result)
     }).catch((err) => {
         console.log(err)
@@ -234,7 +124,7 @@ app.get('/Homepage/:username', (req, res) => {
 
 app.post('/do-follow', (req, res) => {
     console.log(req.body)
-    db.doFollow(req.body).then((result) => {
+    followers.doFollow(req.body).then((result) => {
         res.send(result)
     }).catch((err) => {
         console.log(err)
@@ -244,7 +134,7 @@ app.post('/do-follow', (req, res) => {
 
 app.post('/do-unfollow', (req, res) => {
     console.log(req.body)
-    db.doUnFollow(req.body).then((result) => {
+    followers.doUnFollow(req.body).then((result) => {
         res.send(result)
     }).catch((err) => {
         console.log(err)
@@ -254,7 +144,7 @@ app.post('/do-unfollow', (req, res) => {
 
 app.post('/edit-profile', (req,res)=>{
     // console.log(req.body)
-    db.editProfile(req.body).then((result)=>{
+    user.editProfile(req.body).then((result)=>{
         res.send(result)
     }).catch((err)=>{
         console.log(err)
@@ -264,7 +154,8 @@ app.post('/edit-profile', (req,res)=>{
 
 
 app.post('/like-post',(req,res)=>{
-    db.doLikePost(req.body.postID, req.body.userID).then((result)=>{
+    console.log(req);
+    likes.doLikePost(req.body.postID, req.body.userID).then((result)=>{
         console.log(result)
         res.send(result)
     }).catch((err)=>{
@@ -275,7 +166,8 @@ app.post('/like-post',(req,res)=>{
 
 
 app.post('/dislike-post',(req,res)=>{
-    db.disLikePost(req.body.postID, req.body.userID).then((result)=>{
+    console.log(req);
+    likes.disLikePost(req.body.postID, req.body.userID).then((result)=>{
         console.log(result)
         res.send(result)
     }).catch((err)=>{
@@ -286,7 +178,7 @@ app.post('/dislike-post',(req,res)=>{
 
 
 app.get('/no-of-likes/:postID',(req,res)=>{
-    db.getNoOfLikes(req.params.postID).then((result)=>{
+    likes.getNoOfLikes(req.params.postID).then((result)=>{
         res.send(result)
     })
     .catch((err)=>{
@@ -296,7 +188,7 @@ app.get('/no-of-likes/:postID',(req,res)=>{
 
 app.post('/is-liked',(req,res)=>{
     console.log('hi')
-    db.isLiked(req.body.postID, req.body.userID).then(response =>{
+    likes.isLiked(req.body.postID, req.body.userID).then(response =>{
         res_body = {
             "status" : response
         }
@@ -308,7 +200,7 @@ app.post('/is-liked',(req,res)=>{
 })
 
 app.get('/get-user-posts/:userid',(req,res)=>{
-    db.getPostByUserID(req.params.userid).then((result)=>{
+    post.getPostByUserID(req.params.userid).then((result)=>{
         console.log(result)
         res.send(result)
     }).catch((err)=>{
