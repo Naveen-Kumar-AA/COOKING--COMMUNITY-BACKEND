@@ -42,12 +42,18 @@ app.post('/check-user-password', (req, res) => {
 
 
 function validateUserPasswd(user_passwd) {
-    const schema = {
-        username: Joi.string().required(),
-        password: Joi.string().required()
-    };
+    const schema = Joi.object({
+        username: Joi.string()
+            .regex(/^[a-z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/)
+            .min(3)
+            .max(30)
+            .required(),
+        password: Joi.string()
+            .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{5,30}$/)
+            .required()
+    });
 
-    return Joi.validate(user_passwd, schema);
+    return schema.validate(user_passwd);
 }
 
 
@@ -62,28 +68,105 @@ app.get('/profile/:profile_id', (req, res) => {
 });
 
 
-app.post('/do-signup', (req, res) => {
-    // console.log(req.body)
-    user.doSignUp(req.body).then((result) => {
+// app.post('/do-signup', (req, res) => {
+//     // console.log(req.body)
+//     user.doSignUp(req.body).then((result) => {
+//         res.send(result);
+//     }).catch((err) => {
+//         console.log(`sign-up error : ${JSON.stringify(err)}`);
+//         res.send(err);
+//     })
+// });
+
+
+const signUpSchema = Joi.object({
+    username: Joi.string()
+      .regex(/^[a-z0-9]+$/)
+      .min(3)
+      .max(30)
+      .required(),
+    First_name: Joi.string()
+      .min(1)
+      .max(35)
+      .required(),
+    Last_name: Joi.string()
+      .min(1)
+      .max(35)
+      .required(),
+    phn_number: Joi.string()
+      .length(10)
+      .regex(/^[0-9]+$/)
+      .required(),
+    email: Joi.string()
+      .max(35)
+      .regex(/^[a-z0-9]+@[a-z]+\.[a-z]{2,3}$/)
+      .required(),
+    password: Joi.string()
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{5,30}$/)
+      .required(),
+    C_password: Joi.string()
+      .valid(Joi.ref('password'))
+      .required(),
+  });
+
+  
+  app.post('/do-signup', (req, res) => {
+    console.log(req.body);
+    const { error } = signUpSchema.validate(req.body);
+    if (error) {
+      console.log(`sign-up error : ${JSON.stringify(error)}`);
+      return res.status(400).send(error.details[0].message);
+    }
+  
+    user.doSignUp(req.body)
+      .then((result) => {
         res.send(result);
-    }).catch((err) => {
+      })
+      .catch((err) => {
         console.log(`sign-up error : ${JSON.stringify(err)}`);
         res.send(err);
-    })
-});
+      });
+  });
+  
 
 
 
-app.post('/new-post', (req, res) => {
-    // console.log(req.body)
+// app.post('/new-post', (req, res) => {
+//     console.log(req.body)
+//     post.createNewPost(req.body).then((result) => {
+//         res.send(result);
+//     }).catch((err) => {
+//         console.log(`Create new post error : ${JSON.stringify(err)}`);
+//         res.send(err);
+//     })
+// });
+
+
+
+const postSchema = Joi.object({
+    username: Joi.string().required(),
+    title: Joi.string().max(80).required(),
+    meal: Joi.string().max(80).required(),
+    cuisine: Joi.string().max(80).required(),
+    recipe: Joi.string().max(3000).regex(/^[^'"]*$/),
+    caption: Joi.string().max(300),
+}).options({ allowUnknown: true }).unknown(true).strict(false);
+
+  
+  app.post('/new-post', (req, res) => {
+    const { error } = postSchema.validate(req.body);
+    if (error) {
+      console.log(`Create new post error : ${JSON.stringify(error)}`);
+      return res.status(400).send(error.details[0].message);
+    }
+  
     post.createNewPost(req.body).then((result) => {
-        res.send(result);
+      res.send(result);
     }).catch((err) => {
-        console.log(`Create new post error : ${JSON.stringify(err)}`);
-        res.send(err);
-    })
-});
-
+      console.log(`Create new post error : ${JSON.stringify(err)}`);
+      res.send(err);
+    });
+  });
 
 app.get('/posts/:meal', (req, res) => {
     post.getPostsByMeal(req.params.meal).then((result) => {

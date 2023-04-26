@@ -7,8 +7,9 @@ const createLikesTable = async () => {
       client = await pool.connect()
       const query = `
         CREATE TABLE IF NOT EXISTS likes (
-          postid INTEGER NOT NULL PRIMARY KEY,
-          userid VARCHAR(255) NOT NULL
+          postid INTEGER NOT NULL,
+          userid VARCHAR(255) NOT NULL,
+          PRIMARY KEY (postid,userid)
         )
       ` 
       console.log(query)
@@ -164,13 +165,13 @@ const createLikesTable = async () => {
         const timestamp = new Date(recipe.created_at);
         const date = timestamp.toLocaleString();
         return new Promise((resolve, reject) => {
-          getNoOfLikes(recipe.postid).then((likesCount) => {
+          getNoOfLikes(recipe.post_id).then((likesCount) => {
             const body_obj = { 
-              postID: recipe.postid, 
+              postID: recipe.post_id, 
               title: recipe.title, 
               meal: recipe.meal, 
               cuisine: recipe.cuisine, 
-              recipe_content: recipe.recipe_content, 
+              recipe_content: recipe.recipe, 
               caption: recipe.caption, 
               username: recipe.username, 
               date: date, 

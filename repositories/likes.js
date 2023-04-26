@@ -5,8 +5,9 @@ const doLikePost = async (postID, userID) => {
       const client = await pool.connect();
       const query = `
         CREATE TABLE IF NOT EXISTS likes (
-          postid INTEGER NOT NULL PRIMARY KEY,
-          userid VARCHAR(255) NOT NULL
+          postid INTEGER NOT NULL,
+          userid VARCHAR(255) NOT NULL,
+          PRIMARY KEY (postid,userid)
         );
   
         INSERT INTO likes (postid, userid) VALUES ('${postID}', '${userID}');
@@ -44,8 +45,9 @@ const doLikePost = async (postID, userID) => {
       client = await pool.connect()
       const query = `
       CREATE TABLE IF NOT EXISTS likes (
-        postid INTEGER NOT NULL PRIMARY KEY,
-        userid VARCHAR(255) NOT NULL
+        postid INTEGER NOT NULL,
+        userid VARCHAR(255) NOT NULL,
+        PRIMARY KEY(postid,userid)
       );
       `
       console.log(query)
