@@ -4,7 +4,7 @@ const selectAllUsers = async () => {
   const client = await pool.connect();
 
   try {
-    const query = 'SELECT * FROM user';
+    const query = 'SELECT * FROM users';
     const { rows } = await client.query(query);
     return rows;
   } catch (e) {
@@ -14,22 +14,12 @@ const selectAllUsers = async () => {
   }
 };
 
-// // Example usage:
-// (async () => {
-//     try {
-//       const users = await selectAllUsers();
-//       console.log(users);
-//     } catch (e) {
-//       console.error(e);
-//     }
-//   })();
-
 
 const checkUserPassword = async (username, password) => {
     const client = await pool.connect();
   
     try {
-      const query = 'SELECT * FROM "user" WHERE username = $1 AND password = $2';
+      const query = 'SELECT * FROM "users" WHERE username = $1 AND password = $2';
       const values = [username, password];
       const result = await client.query(query, values);
       return result.rows;
@@ -44,11 +34,13 @@ const checkUserPassword = async (username, password) => {
     try {
       const client = await pool.connect();
       const query = `
-        CREATE TABLE IF NOT EXISTS user_follower (
-          userid VARCHAR(255) NOT NULL,
-          followerid VARCHAR(255) NOT NULL,
-          PRIMARY KEY (userid,followerid)
-        );
+      CREATE TABLE IF NOT EXISTS user_follower (
+        userid VARCHAR(255) NOT NULL,
+        followerid VARCHAR(255) NOT NULL,
+        PRIMARY KEY (userid, followerid),
+        FOREIGN KEY (userid) REFERENCES users(username) ON DELETE CASCADE,
+        FOREIGN KEY (followerid) REFERENCES users(username) ON DELETE CASCADE
+      );
       `;
       const result = await client.query(query);
       client.release();
@@ -62,31 +54,29 @@ const checkUserPassword = async (username, password) => {
 
   
   const doSignUp = async (signup_details) => {
-    await createUserFollower();
     const client = await pool.connect();
     const createUserTable = `
-    CREATE TABLE IF NOT EXISTS "user" (
+    CREATE TABLE IF NOT EXISTS "users" (
         "username" TEXT PRIMARY KEY,
-        "password" TEXT
+        "password" TEXT NOT NULL
     );
     `;
-  
   const createProfileTable = `
-    CREATE TABLE IF NOT EXISTS "profile" (
-      "username" TEXT PRIMARY KEY,
-      "first_name" TEXT,
-      "last_name" TEXT,
-      "bio" TEXT,
-      "email" TEXT,
-      "phn_number" TEXT
-    );
+  CREATE TABLE IF NOT EXISTS "profile" (
+    "username" TEXT PRIMARY KEY REFERENCES "users" ("username") on DELETE CASCADE,
+    "first_name" TEXT,
+    "last_name" TEXT,
+    "bio" TEXT,
+    "email" TEXT,
+    "phn_number" TEXT
+  );
     `;
     try {
     
       // Create tables if they don't exist
       await client.query(createUserTable);
       await client.query(createProfileTable);
-  
+      await createUserFollower();
       // Check if username already exists
       const checkUsernameQuery = `
         SELECT username
@@ -96,14 +86,15 @@ const checkUserPassword = async (username, password) => {
       const checkUsernameResult = await client.query(checkUsernameQuery, [signup_details.username]);
   
       if (checkUsernameResult.rows.length > 0) {
-        return Promise.reject({
-          "error": "Username already exists"
-        });
+        // return Promise.reject({
+        //   "error": "Username already exists"
+        // });
+        return Promise.reject("Username already exists")
       }
   
       // Insert into "user" table
       const insertUserQuery = `
-        INSERT INTO "user" (username, password)
+        INSERT INTO "users" (username, password)
         VALUES ($1, $2)
       `;
       const insertUserValues = [signup_details.username, signup_details.password];
@@ -197,10 +188,10 @@ const checkUserPassword = async (username, password) => {
 
   const editProfile = async (newProfile) => {
     const client = await pool.connect();
-    const query = `UPDATE profile SET first_name = '${newProfile.first_name}', last_name = '${newProfile.last_name}', bio = '${newProfile.bio}', email = '${newProfile.email}', phn_number = ${newProfile.phn_no} WHERE username = '${newProfile.username}'`;
-    console.log(query);
+    const query = `UPDATE profile SET first_name = $1, last_name = $2, bio = $3, email = $4, phn_number = $5 WHERE username = $6`;
+    const values = [newProfile.First_name, newProfile.Last_name, newProfile.bio, newProfile.email, newProfile.phn_number, newProfile.username ];
     try {
-      const result = await client.query(query);
+      const result = await client.query(query,values);
       client.release();
       console.log(result);
       return result;

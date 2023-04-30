@@ -6,13 +6,15 @@ const createLikesTable = async () => {
     try {
       client = await pool.connect()
       const query = `
-        CREATE TABLE IF NOT EXISTS likes (
-          postid INTEGER NOT NULL,
-          userid VARCHAR(255) NOT NULL,
-          PRIMARY KEY (postid,userid)
-        )
+      CREATE TABLE IF NOT EXISTS likes (
+        postid INTEGER NOT NULL,
+        userid VARCHAR(255) NOT NULL,
+        PRIMARY KEY (postid, userid),
+        FOREIGN KEY (postid) REFERENCES posts(post_id) ON DELETE CASCADE,
+        FOREIGN KEY (userid) REFERENCES users(username) ON DELETE CASCADE
+      );
+      
       ` 
-      console.log(query)
       await client.query(query)
     } catch (err) {
       console.log('Error creating likes table in PostgreSQL', err)
@@ -25,21 +27,21 @@ const createLikesTable = async () => {
   const createPostsTableIfNotExists = async () => {
     const client = await pool.connect();
     const createPostTable = `
-      CREATE TABLE IF NOT EXISTS posts (
-        post_id SERIAL PRIMARY KEY,
-        title TEXT,
-        meal TEXT,
-        cuisine TEXT,
-        recipe TEXT,
-        caption TEXT,
-        username TEXT,
-        created_at TIMESTAMP DEFAULT NOW()
-      );
+    CREATE TABLE IF NOT EXISTS posts (
+      post_id SERIAL PRIMARY KEY,
+      title TEXT,
+      meal TEXT,
+      cuisine TEXT,
+      recipe TEXT,
+      caption TEXT,
+      username TEXT REFERENCES users(username) on DELETE CASCADE,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+    
     `;
   
     try {
       const res = await client.query(createPostTable);
-      console.log('Posts table created or already exists.');
       return Promise.resolve(res);
     } catch (e) {
       return Promise.reject(e);
@@ -54,16 +56,16 @@ const createLikesTable = async () => {
     await createLikesTable();
     const client = await pool.connect();
     const createPostTable = `
-      CREATE TABLE IF NOT EXISTS posts (
-        post_id SERIAL PRIMARY KEY,
-        title TEXT,
-        meal TEXT,
-        cuisine TEXT,
-        recipe TEXT,
-        caption TEXT,
-        username TEXT,
-        created_at TIMESTAMP DEFAULT NOW()
-      );
+    CREATE TABLE IF NOT EXISTS posts (
+      post_id SERIAL PRIMARY KEY,
+      title TEXT,
+      meal TEXT,
+      cuisine TEXT,
+      recipe TEXT,
+      caption TEXT,
+      username TEXT REFERENCES users(username) on DELETE CASCADE,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
     `;
   
     try {
@@ -157,9 +159,7 @@ const createLikesTable = async () => {
       await createPostsTableIfNotExists();
       client = await pool.connect();
       const query = `SELECT * FROM posts WHERE username = $1`;
-      console.log(query);
       const result = await client.query(query, [userID]);
-  
       const body = result.rows;
       const resp = body.map((recipe) => {
         const timestamp = new Date(recipe.created_at);
@@ -194,11 +194,189 @@ const createLikesTable = async () => {
       }
     }
   };
+
+
   
+  const getAllPosts = async () => {
+    await createPostsTableIfNotExists();
+    const client = await pool.connect();
+    const query = `
+      SELECT * FROM posts
+    `;
+    try {
+      const result = await client.query(query);
+      const rows = result.rows;
+  
+      const body = rows.map((recipe) => {
+        const timestamp = new Date(recipe.created_at);
+        const date = timestamp.toLocaleString();
+        return new Promise((resolve, reject) => {
+          getNoOfLikes(recipe.post_id).then((likesCount) => {
+            const body_obj = { 
+              postID: recipe.post_id, 
+              title: recipe.title, 
+              meal: recipe.meal, 
+              cuisine: recipe.cuisine, 
+              recipe_content: recipe.recipe, 
+              caption: recipe.caption, 
+              username: recipe.username, 
+              date: date, 
+              likes: likesCount 
+            };
+            resolve(body_obj);
+          }).catch((err) => {
+            reject(err);
+          });
+        });
+      });
+      const results = await Promise.all(body);
+      return Promise.resolve(results);
+    } catch (e) {
+        console.log(e)
+      return Promise.reject(e);
+    } finally {
+      client.release();
+    }
+  };
+  
+
+  const deletePostById = async (postId) => {
+    await createPostsTableIfNotExists();
+    const client = await pool.connect();
+    const query = `
+      DELETE FROM posts
+      WHERE post_id = $1
+    `;
+    try {
+      await client.query(query, [postId]);
+      return Promise.resolve();
+    } catch (e) {
+      console.log(e);
+      return Promise.reject(e);
+    } finally {
+      client.release();
+    }
+  };
+  
+
+  const savePost = async (postID, userID) => {
+    try {
+      const client = await pool.connect();
+      const createQuery = `
+      CREATE TABLE IF NOT EXISTS saved_posts (
+        postid INTEGER NOT NULL,
+        userid VARCHAR(255) NOT NULL,
+        PRIMARY KEY (postid, userid),
+        FOREIGN KEY (postid) REFERENCES posts(post_id) ON DELETE CASCADE,
+        FOREIGN KEY (userid) REFERENCES users(username) ON DELETE CASCADE
+      );
+      `;
+      const insertQuery = `
+        INSERT INTO saved_posts (postid, userid) VALUES ($1, $2)
+      `;
+      await client.query(createQuery);
+      const result = await client.query(insertQuery, [postID, userID]);
+      client.release();
+      return result;
+    } catch (err) {
+      return err;
+    }
+  };
+
+  const unsavePost = async (postID, userID) => {
+    try {
+      const client = await pool.connect();
+      const deleteQuery = `
+        DELETE FROM saved_posts WHERE postid = $1 AND userid = $2
+      `;
+      const result = await client.query(deleteQuery, [postID, userID]);
+      client.release();
+      return result;
+    } catch (err) {
+      return err;
+    }
+  };
+  
+  const getSavedPosts = async(userID)=>{
+    try {
+      const client = await pool.connect();
+      const createQuery = `
+      CREATE TABLE IF NOT EXISTS saved_posts (
+        postid INTEGER NOT NULL,
+        userid VARCHAR(255) NOT NULL,
+        PRIMARY KEY (postid, userid),
+        FOREIGN KEY (postid) REFERENCES posts(post_id) ON DELETE CASCADE,
+        FOREIGN KEY (userid) REFERENCES users(username) ON DELETE CASCADE
+      );
+      `;
+      const selectQuery = `
+        SELECT postid FROM saved_posts WHERE userid = $1;
+      `;
+      await client.query(createQuery);
+      const result = await client.query(selectQuery, [userID]);
+      client.release();
+      return result.rows;
+    } catch (err) {
+      return err;
+    }
+  }
+
+  const isPostSavedByUser = async (userID, postID) => {
+    try {
+      const savedPosts = await getSavedPosts(userID);
+      const savedPostIDs = savedPosts.map((post) => post.postid);
+      return savedPostIDs.includes(parseInt(postID));
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  };
+  
+  
+  const getPostByPostID = async (postID) => {
+    let client;
+    try {
+      await createPostsTableIfNotExists();
+      client = await pool.connect();
+      const query = `SELECT * FROM posts WHERE post_id = $1`;
+      const result = await client.query(query, [postID]);
+      const body = result.rows[0];
+      const likesCount = await getNoOfLikes(body.post_id);
+      const timestamp = new Date(body.created_at);
+      const date = timestamp.toLocaleString();
+      const body_obj = {
+        postID: body.post_id,
+        title: body.title,
+        meal: body.meal,
+        cuisine: body.cuisine,
+        recipe_content: body.recipe,
+        caption: body.caption,
+        username: body.username,
+        date: date,
+        likes: likesCount,
+      };
+      return body_obj;
+    } catch (err) {
+      console.log('Error querying PostgreSQL', err);
+      throw err;
+    } finally {
+      if (client) {
+        client.release();
+      }
+    }
+  };
+  
+
   module.exports = {
     getPostByUserID,
     getPostsByMeal,
     createNewPost,
-
+    getAllPosts,
+    deletePostById,
+    savePost,
+    unsavePost,
+    getSavedPosts,
+    getPostByPostID,
+    isPostSavedByUser
   }
   

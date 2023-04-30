@@ -4,11 +4,14 @@ const doLikePost = async (postID, userID) => {
     try {
       const client = await pool.connect();
       const query = `
-        CREATE TABLE IF NOT EXISTS likes (
-          postid INTEGER NOT NULL,
-          userid VARCHAR(255) NOT NULL,
-          PRIMARY KEY (postid,userid)
-        );
+      CREATE TABLE IF NOT EXISTS likes (
+        postid INTEGER NOT NULL,
+        userid VARCHAR(255) NOT NULL,
+        PRIMARY KEY (postid, userid),
+        FOREIGN KEY (postid) REFERENCES posts(post_id) ON DELETE CASCADE,
+        FOREIGN KEY (userid) REFERENCES users(username) ON DELETE CASCADE
+      );
+      
   
         INSERT INTO likes (postid, userid) VALUES ('${postID}', '${userID}');
       `;
@@ -47,8 +50,11 @@ const doLikePost = async (postID, userID) => {
       CREATE TABLE IF NOT EXISTS likes (
         postid INTEGER NOT NULL,
         userid VARCHAR(255) NOT NULL,
-        PRIMARY KEY(postid,userid)
+        PRIMARY KEY (postid, userid),
+        FOREIGN KEY (postid) REFERENCES posts(post_id) ON DELETE CASCADE,
+        FOREIGN KEY (userid) REFERENCES users(username) ON DELETE CASCADE
       );
+      
       `
       console.log(query)
       await client.query(query)
