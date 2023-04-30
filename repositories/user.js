@@ -17,9 +17,16 @@ const selectAllUsers = async () => {
 
 const checkUserPassword = async (username, password) => {
     const client = await pool.connect();
-  
+
     try {
-      const query = 'SELECT * FROM "users" WHERE username = $1 AND password = $2';
+      const createUserTable = `
+    CREATE TABLE IF NOT EXISTS "users" (
+        "username" TEXT PRIMARY KEY,
+        "password" TEXT NOT NULL
+    );
+    `;
+    await client.query(createUserTable);
+      const query = `SELECT * FROM "users" WHERE username = $1 AND password = $2`;
       const values = [username, password];
       const result = await client.query(query, values);
       return result.rows;
@@ -33,6 +40,7 @@ const checkUserPassword = async (username, password) => {
   const createUserFollower = async () => {
     try {
       const client = await pool.connect();
+      
       const query = `
       CREATE TABLE IF NOT EXISTS user_follower (
         userid VARCHAR(255) NOT NULL,
