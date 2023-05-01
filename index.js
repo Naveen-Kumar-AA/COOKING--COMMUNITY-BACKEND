@@ -22,14 +22,14 @@ function authenticateToken(req, res, next) {
     if (token == null) return res.sendStatus(401);
   
     jwt.verify(token, accessTokenSecret, (err, payload) => {
-      if (err) return res.sendStatus(403);
-  
+      if (err) {
+        console.log(err);
+        return res.sendStatus(403);}
       req.user = payload.username;
       next();
     });
   }
   
-
   function generateAccessToken(user) {
     const payload = {
       username: user.username,
@@ -55,13 +55,14 @@ app.get('/user-password', (req, res) => {
 });
 
 app.post('/check-user-password', (req, res) => {
-
+  console.log(req);
     const { error } = validateUserPasswd(req.body);     //eq to result.error
     // if invalid, return 400 - Bad request
     if (error) return res.status(400).send(error.details[0].message);
 
     user.checkUserPassword(req.body.username, req.body.password).then((result) => {
         const token = generateAccessToken({ username: req.body.username });
+        console.log({result,token});
         res.json({result, token});
     }).catch((err) => {
         console.log(err);
@@ -435,8 +436,9 @@ app.get('/comments/:postID', authenticateToken, (req, res) => {
   });
 
 
-  app.post('/comments', authenticateToken, (req, res) => {
+  app.post('/add-comments', authenticateToken, (req, res) => {
     const { postID, userID, comment } = req.body;
+    console.log(req.body);
     comments.addComment(postID, userID, comment)
       .then((result) => {
         return res.status(201).json({ message: 'Comment added successfully' });
@@ -445,7 +447,7 @@ app.get('/comments/:postID', authenticateToken, (req, res) => {
         res.json(err);
       });
   });
-  
+
   app.post('/save', authenticateToken, (req, res) => {
     const { postID, userID } = req.body;
   
@@ -498,7 +500,7 @@ app.get('/comments/:postID', authenticateToken, (req, res) => {
         res.json(err);
       });
   });
-  
+
 
 
 const port = process.env.PORT || 3001;

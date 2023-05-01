@@ -29,7 +29,16 @@ const checkUserPassword = async (username, password) => {
       const query = `SELECT * FROM "users" WHERE username = $1 AND password = $2`;
       const values = [username, password];
       const result = await client.query(query, values);
-      return result.rows;
+      if(result.rows.length === 0){
+        return {
+          res : [],
+          msg : false
+        };
+      }
+      return {
+        res :result.rows,
+        msg :true,
+      };
     } catch (e) {
       throw e;
     } finally {

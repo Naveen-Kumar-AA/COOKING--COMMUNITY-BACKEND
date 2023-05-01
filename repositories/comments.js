@@ -4,7 +4,7 @@ const pool = require('./connection');
 const addComment = async (postID, userID, comment) => {
     try {
       const client = await pool.connect();
-      const query = `
+      const createTable = `
       CREATE TABLE IF NOT EXISTS comments (
         postid INTEGER NOT NULL,
         userid VARCHAR(255) NOT NULL,
@@ -14,11 +14,13 @@ const addComment = async (postID, userID, comment) => {
           ON DELETE CASCADE,
         CONSTRAINT fk_comments_user FOREIGN KEY (userid) REFERENCES users(username)
           ON DELETE CASCADE
-      );
-  
-        INSERT INTO comments (postid, userid, comment) VALUES (${postID}, '${userID}', '${comment}');
+      );`;
+      const query = `
+        INSERT INTO comments (postid, userid, comment) VALUES ($1, $2, $3);
       `;
-      const result = await client.query(query);
+      await client.query(createTable);
+      const values = [postID,userID,comment];
+      const result = await client.query(query,values);
       client.release();
       return result;
     } catch (err) {
@@ -30,7 +32,7 @@ const addComment = async (postID, userID, comment) => {
   const getAllComments = async (postID) => {
     try {
       const client = await pool.connect();
-      const query = `
+      const createTable = `
       CREATE TABLE IF NOT EXISTS comments (
         postid INTEGER NOT NULL,
         userid VARCHAR(255) NOT NULL,
@@ -40,12 +42,14 @@ const addComment = async (postID, userID, comment) => {
           ON DELETE CASCADE,
         CONSTRAINT fk_comments_user FOREIGN KEY (userid) REFERENCES users(username)
           ON DELETE CASCADE
-      );
+      );`
+      const query = `
         SELECT * FROM comments WHERE postid = '${postID}';
       `;
+      await client.query(createTable);
       const result = await client.query(query);
       client.release();
-      return result[1].rows;
+      return result.rows;
     } catch (err) {
       console.error(err);
       throw err;
@@ -55,7 +59,7 @@ const addComment = async (postID, userID, comment) => {
   const getNoOfComments = async (postID) => {
     try{
         const client = await pool.connect();
-      const query = `
+        const createTable = `
       CREATE TABLE IF NOT EXISTS comments (
         postid INTEGER NOT NULL,
         userid VARCHAR(255) NOT NULL,
@@ -65,14 +69,15 @@ const addComment = async (postID, userID, comment) => {
           ON DELETE CASCADE,
         CONSTRAINT fk_comments_user FOREIGN KEY (userid) REFERENCES users(username)
           ON DELETE CASCADE
-      );
-      
+      );`;
+      const query = `      
         SELECT COUNT(comment) FROM comments WHERE postid = '${postID}';
       `;
+      await client.query(createTable);
       const result = await client.query(query);
       console.log(result);
       client.release();
-      return result[1].rows;
+      return result.rows;
     }catch (err) {
         return err
     }
