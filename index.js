@@ -303,11 +303,13 @@ const editProfileSchema = Joi.object({
     First_name: Joi.string()
       .min(1)
       .max(35)
-      .required(),
+      .required()
+      .regex(/^[^<>"'&]*$/),
     Last_name: Joi.string()
       .min(1)
       .max(35)
-      .required(),
+      .required()
+      .regex(/^[^<>"'&]*$/),
     phn_number: Joi.string()
       .length(10)
       .regex(/^[0-9]+$/)
@@ -435,8 +437,18 @@ app.get('/comments/:postID', authenticateToken, (req, res) => {
       });
   });
 
-
+  const schema = Joi.object({
+    postID: Joi.required(),
+    userID: Joi.required(),
+    comment: Joi.string().regex(/^[^<>"'&]*$/).required()
+  });
   app.post('/add-comments', authenticateToken, (req, res) => {
+    const { error } = schema.validate(req.body);
+    console.log(req.body.comment);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
+  
     const { postID, userID, comment } = req.body;
     console.log(req.body);
     comments.addComment(postID, userID, comment)
