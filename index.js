@@ -440,7 +440,7 @@ app.get('/comments/:postID', authenticateToken, (req, res) => {
   const schema = Joi.object({
     postID: Joi.required(),
     userID: Joi.required(),
-    comment: Joi.string().regex(/^[^<>"'&]*$/).required()
+    comment: Joi.string().required()
   });
   app.post('/add-comments', authenticateToken, (req, res) => {
     const { error } = schema.validate(req.body);
