@@ -318,7 +318,7 @@ const editProfileSchema = Joi.object({
       .required(),
     bio: Joi.string()
       .max(100)
-      .regex(/^[a-zA-Z0-9\s.,!?@$#&*]+$/),
+      .regex(/^[^<>"'&]*$/),
     token: Joi.string(),
   });
   
