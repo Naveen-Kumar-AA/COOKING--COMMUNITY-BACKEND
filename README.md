@@ -13,15 +13,51 @@ This is the backend service for Cooking Community, a recipe sharing application.
 
 The following endpoints are available:
 
-- `POST /signup`: Create a new user account.
-- `POST /login`: Log in to an existing account.
-- `GET /recipes`: Get a list of all recipes.
-- `GET /recipes/:id`: Get details of a specific recipe.
-- `POST /recipes`: Create a new recipe.
-- `PUT /recipes/:id`: Update an existing recipe.
-- `DELETE /recipes/:id`: Delete a recipe.
-- `POST /recipes/:id/like`: Like a recipe.
-- `DELETE /recipes/:id/like`: Unlike a recipe.
+### Authentication
+
+- `POST /check-user-password`: Check user's password during login
+- `POST /do-signup`: Create a new user account
+
+### Profile
+
+- `GET /profile/:profile_id`: Get a user's profile
+- `POST /edit-profile`: Edit a user's profile
+
+### Posts
+
+- `POST /new-post': Create a new post
+- `GET /posts`: Get all posts
+- `DELETE /delete-post/:postId`: Delete a post
+- `GET /posts/:meal`: Get all posts filtered by meal type
+- `GET /search/:value`: Search for posts based on keyword
+
+### Follow
+
+- `POST /do-follow`: Follow a user
+- `POST /do-unfollow`: Unfollow a user
+- `POST /toggle-follow`: Toggle follow status
+- `POST /is-following`: Check if user is following another user
+
+### Likes
+
+- `POST /like-post`: Like a post
+- `POST /dislike-post`: Dislike a post
+- `POST /update-like-status`: Update the like status of a post
+- `GET /no-of-likes/:postID`: Get the number of likes for a post
+- `POST /is-liked`: Check if a post is liked by a user
+
+### Comments
+
+- `GET /comments/:postID`: Get all comments for a post
+- `GET /comments/no-of-comments/:postID`: Get the number of comments for a post
+- `POST /add-comments`: Add a comment to a post
+
+### Saved Posts
+
+- `POST /save`: Save a post
+- `POST /unsave`: Unsave a post
+- `GET /get-saved-posts/:userID`: Get all saved posts for a user
+- `GET /is-saved/:userID/:postID`: Check if a post is saved by a user
 
 ## Dependencies
 
