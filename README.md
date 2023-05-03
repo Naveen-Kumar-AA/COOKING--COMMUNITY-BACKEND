@@ -25,7 +25,7 @@ The following endpoints are available:
 
 ### Posts
 
-- `POST /new-post': Create a new post
+- `POST /new-post`: Create a new post
 - `GET /posts`: Get all posts
 - `DELETE /delete-post/:postId`: Delete a post
 - `GET /posts/:meal`: Get all posts filtered by meal type
