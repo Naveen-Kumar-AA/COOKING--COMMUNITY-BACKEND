@@ -13,7 +13,7 @@ require('dotenv').config()
 app.use(cors())
 app.use(express.json());
 
-const accessTokenSecret = process.env.SECRET_Key
+const accessTokenSecret = process.env.SECRET_KEY
 
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
